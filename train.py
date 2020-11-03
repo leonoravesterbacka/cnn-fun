@@ -36,6 +36,12 @@ imshowPytorch(torchvision.utils.make_grid(images[0]))
 model = LeNet()
 #model = NeuralNet(10)
 
+module = model.conv1
+print(list(module.named_parameters()))
+print("before pruning: ",list(module.named_buffers()))
+prune.random_unstructured(module, name="weight", amount=0.3)
+print("after pruning ", list(module.named_parameters()))
+
 criterion = nn.CrossEntropyLoss()
 optim = torch.optim.Adam(model.parameters())
 print("model ", model)
