@@ -37,10 +37,18 @@ model = LeNet()
 #model = NeuralNet(10)
 
 module = model.conv1
-print(list(module.named_parameters()))
+print("module.named_parameters(): ", list(module.named_parameters()))
+## named parameters of the conv1 layer are 
+    #'weight' which is a tensor of weights initialized randomly of n * kernel_size*kernel_size where n is the number of output channels
+    #'bias' which is a 1 D tensor of length of the output channels
 print("before pruning: ",list(module.named_buffers()))
 prune.random_unstructured(module, name="weight", amount=0.3)
-print("after pruning ", list(module.named_parameters()))
+print("after pruning: ", list(module.named_parameters()))
+#after pruning the named_parameters will show 'weight_orig' instead of 'weight'
+print("module.named_buffers(): ",list(module.named_buffers()))
+#after pruning the named_buffers shows the 'weight_mask'
+print("module.weight: ", module.weight)
+print("module._forward_pre_hooks: ",module._forward_pre_hooks)
 
 criterion = nn.CrossEntropyLoss()
 optim = torch.optim.Adam(model.parameters())
