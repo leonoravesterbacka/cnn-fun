@@ -1,12 +1,14 @@
 import torch
 import torch.nn as nn
+import torch.nn.utils.prune as prune
+
 import torchvision
 import torchvision.transforms
 import numpy as np 
 import matplotlib.pyplot as plt
 
 from ml.plotting import imshowPytorch
-from ml.model import NeuralNet
+from ml.model import NeuralNet, LeNet
 
 
 transforms = torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
@@ -31,7 +33,9 @@ images, label = data_iter.next()
 imshowPytorch(torchvision.utils.make_grid(images[0]))
 
 ##visualization
-model = NeuralNet(10)
+model = LeNet()
+#model = NeuralNet(10)
+
 criterion = nn.CrossEntropyLoss()
 optim = torch.optim.Adam(model.parameters())
 print("model ", model)
