@@ -40,20 +40,13 @@ for e in range(2):
     # define the loss value after the epoch
     losss = 0.0
     number_of_sub_epoch = 0
-    print("hej ", e)    
     # loop for every training batch (one epoch)
     for images, labels in train_loader:
-        #create the output from the network
         out = model(images)
-        # count the loss function
         loss = criterion(out, labels)
-        # in pytorch you have assign the zero for gradien in any sub epoch
         optim.zero_grad()
-        # count the backpropagation
         loss.backward()
-        # learning
         optim.step()
-        # add new value to the main loss
         losss += loss.item()
         number_of_sub_epoch += 1
     print("Epoch {}: Loss: {}".format(e, losss / number_of_sub_epoch))
