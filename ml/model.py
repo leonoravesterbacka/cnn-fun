@@ -1,5 +1,15 @@
+import os
+
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.data import DataLoader, random_split
+
+import torchvision
+from torchvision import datasets, transforms
+from torchvision.datasets import MNIST
+
+import pytorch_lightning as pl
 
 class NeuralNet(nn.Module):
     def __init__(self, num_of_class):
@@ -35,15 +45,15 @@ class NeuralNet(nn.Module):
         return x
 
 
-class LeNet(nn.Module):
+class LeNet(pl.LightningModule):
     def __init__(self):
         super(LeNet, self).__init__()
         # 1 input image channel, 6 output channels, 3x3 square conv kernel
         self.conv1 = nn.Conv2d(1, 6, kernel_size = 3)
         self.conv2 = nn.Conv2d(6, 16, kernel_size = 3)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)  # 5x5 image dimension
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.fc1 = nn.Linear(16 * 5 * 5, 32)  # 5x5 image dimension
+        self.fc2 = nn.Linear(32, 16)
+        self.fc3 = nn.Linear(16, 10)
 
     def forward(self, x):
         x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
@@ -54,3 +64,35 @@ class LeNet(nn.Module):
         x = self.fc3(x)
         return x
 
+    def train_dataloader(self):
+        # transforms
+        # prepare transforms standard to MNIST
+        transform=transforms.Compose([transforms.ToTensor(),
+                                      transforms.Normalize((0.1307,), (0.3081,))])
+        mnist_train = torchvision.datasets.FashionMNIST(os.getcwd(), train=True, download=True, transform=transform)
+        return DataLoader(mnist_train, batch_size=64, num_workers = 10)
+    def val_dataloader(self):
+        transform=transforms.Compose([transforms.ToTensor(),
+                                      transforms.Normalize((0.1307,), (0.3081,))])
+        mnist_val = torchvision.datasets.FashionMNIST(os.getcwd(), train=True, download=True, transform=transform)
+
+        return DataLoader(mnist_val, batch_size=64, num_workers = 10)
+
+    def test_dataloader(self):
+        transform=transforms.Compose([transforms.ToTensor(),
+                                      transforms.Normalize((0.1307,), (0.3081,))])
+        mnist_test = torchvision.datasets.FashionMNIST(os.getcwd(), train=True, download=True, transform=transform)
+
+
+        return DataLoader(mnist_test, batch_size=64, num_workers = 10)
+
+    def training_step(self, batch, batch_idx):
+
+        x, y = batch
+        logits = self(x)
+        loss = F.nll_loss(logits, y)
+        return loss
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        return optimizer
