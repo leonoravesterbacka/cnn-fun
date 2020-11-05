@@ -44,14 +44,36 @@ class NeuralNet(nn.Module):
         x = self.classifier(x)
         return x
 
-
-class LeNet(pl.LightningModule):
+class LeNet(nn.Module):
     def __init__(self):
         super(LeNet, self).__init__()
         # 1 input image channel, 6 output channels, 3x3 square conv kernel
         self.conv1 = nn.Conv2d(1, 6, kernel_size = 3)
         self.conv2 = nn.Conv2d(6, 16, kernel_size = 3)
+        self.fc1 = nn.Linear(16 * 5 * 5, 60)  # 5x5 image dimension
+        self.drop = nn.Dropout2d(0.25)
+        self.fc2 = nn.Linear(60, 48)
+        self.fc3 = nn.Linear(48, 10)
+
+    def forward(self, x):
+        x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
+        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
+        x = x.view(-1, int(x.nelement() / x.shape[0]))
+        x = F.relu(self.fc1(x))
+        x = self.drop(x)
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+
+class LeNetPL(pl.LightningModule):
+    def __init__(self):
+        super(LeNetPL, self).__init__()
+        # 1 input image channel, 6 output channels, 3x3 square conv kernel
+        self.conv1 = nn.Conv2d(1, 6, kernel_size = 3)
+        self.conv2 = nn.Conv2d(6, 16, kernel_size = 3)
         self.fc1 = nn.Linear(16 * 5 * 5, 120)  # 5x5 image dimension
+        self.drop = nn.Dropout2d(0.25)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
 
@@ -60,17 +82,18 @@ class LeNet(pl.LightningModule):
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
         x = x.view(-1, int(x.nelement() / x.shape[0]))
         x = F.relu(self.fc1(x))
+        x = self.drop(x)
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
 
     def train_dataloader(self):
-        # transforms
-        # prepare transforms standard to MNIST
         transform=transforms.Compose([transforms.ToTensor(),
                                       transforms.Normalize((0.1307,), (0.3081,))])
         mnist_train = torchvision.datasets.FashionMNIST(os.getcwd(), train=True, download=True, transform=transform)
+
         return DataLoader(mnist_train, batch_size=64, num_workers = 10)
+
     def val_dataloader(self):
         transform=transforms.Compose([transforms.ToTensor(),
                                       transforms.Normalize((0.1307,), (0.3081,))])
@@ -82,7 +105,6 @@ class LeNet(pl.LightningModule):
         transform=transforms.Compose([transforms.ToTensor(),
                                       transforms.Normalize((0.1307,), (0.3081,))])
         mnist_test = torchvision.datasets.FashionMNIST(os.getcwd(), train=True, download=True, transform=transform)
-
 
         return DataLoader(mnist_test, batch_size=64, num_workers = 10)
 
