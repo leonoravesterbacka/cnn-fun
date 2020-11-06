@@ -17,11 +17,29 @@ from ml.model import NeuralNet, LeNetPL
 
 import pytorch_lightning as pl
 
-
+frac = 0.1
 model = LeNetPL()
 print("model ", model)
+module = model.conv1
+print("module.named_parameters(): ", list(module.named_parameters()))
+## named parameters of the conv1 layer are 
+    #'weight' which is a tensor of weights initialized randomly of n * kernel_size*kernel_size where n is the number of output channels
+    #'bias' which is a 1 D tensor of length of the output channels
+print("before pruning: ",list(module.named_buffers()))
+prune.random_unstructured(module, name="weight", amount=frac)
+# the "amount" specifies the amount of weights that are pruned away, i.e. set to zero
+print("after pruning: ", list(module.named_parameters()))
+#after pruning the named_parameters will show 'weight_orig' instead of 'weight'
+print("module.named_buffers(): ",list(module.named_buffers()))
+#after pruning the named_buffers shows the 'weight_mask'
+print("module.weight: ", module.weight)
+print("module._forward_pre_hooks: ",module._forward_pre_hooks)
+
 trainer = Trainer(max_epochs=10, profiler="simple")
 trainer.fit(model)
+
+
+
 
 ### evaluate
 correct = 0
@@ -50,5 +68,8 @@ with torch.no_grad():
             class_correct[label] += c[i].item()
             total_correct[label] += 1
             
-for i in range(10):
-    print("Accuracy of {}: {:.2f}%".format(output_label(i), class_correct[i] * 100 / total_correct[i]))
+with open('pruning_'+str(frac)+'.txt', 'w') as f:
+    f.write('Test Accuracy of the model on the {} test images: {}% with PyTorch'.format(total, 100 * correct // total))
+    for i in range(10):
+        print("Accuracy of {}: {:.2f}%".format(output_label(i), class_correct[i] * 100 / total_correct[i]))
+        f.write("Accuracy of {}: {:.2f}% \n".format(output_label(i), class_correct[i] * 100 / total_correct[i]))
