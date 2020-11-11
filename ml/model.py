@@ -119,3 +119,38 @@ class LeNetPL(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
+
+
+
+class UNet(nn.Module):
+    def contracting_block(self, in_channels, out_channels, kernel_size=3):
+        block = torch.nn.Sequential(
+                    torch.nn.Conv2d(kernel_size=kernel_size, in_channels=in_channels, out_channels=out_channels),
+                    torch.nn.ReLU(),
+                    torch.nn.BatchNorm2d(out_channels),
+                    torch.nn.Conv2d(kernel_size=kernel_size, in_channels=out_channels, out_channels=out_channels),
+                    torch.nn.ReLU(),
+                    torch.nn.BatchNorm2d(out_channels),
+                )
+        return block
+    
+    
+    def __init__(self, in_channel, out_channel):
+        super(UNet, self).__init__()
+        #Encode
+        self.conv_encode1 = self.contracting_block(in_channels=in_channel, out_channels=64)
+        self.conv_maxpool1 = torch.nn.MaxPool2d(kernel_size=2)
+        self.conv_encode2 = self.contracting_block(64, 128)
+        self.conv_maxpool2 = torch.nn.MaxPool2d(kernel_size=2)
+        self.conv_encode3 = self.contracting_block(128, 256)
+        self.conv_maxpool3 = torch.nn.MaxPool2d(kernel_size=2)
+    
+    def forward(self, x):
+        # Encode
+        encode_block1 = self.conv_encode1(x)
+        encode_pool1 = self.conv_maxpool1(encode_block1)
+        encode_block2 = self.conv_encode2(encode_pool1)
+        encode_pool2 = self.conv_maxpool2(encode_block2)
+        encode_block3 = self.conv_encode3(encode_pool2)
+        encode_pool3 = self.conv_maxpool3(encode_block3)
+        return  final_layer
